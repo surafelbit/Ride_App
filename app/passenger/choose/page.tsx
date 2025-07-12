@@ -1,6 +1,6 @@
 // pages/index.jsx
 "use client";
-
+import { useModal } from "context/ModalContext";
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import Head from "next/head";
@@ -63,6 +63,8 @@ function ClickMapHandler({
   return null;
 }
 const LocationSelectorPage = () => {
+  const { openModal } = useModal();
+  const [automaticPosition, setAutomaticPosition] = useState([]);
   const [pointPosition, setPointPosition] = useState<[number, number]>([
     9.03, 38.74,
   ]);
@@ -85,13 +87,32 @@ const LocationSelectorPage = () => {
 
   // Placeholder for automatic location detection
   const handleAutomaticLocation = () => {
-    // TODO: Implement geolocation API
     setLocationStatus("Detecting location...");
-    // Dummy update for demo
-    setTimeout(() => {
-      setPosition([51.51, -0.1]);
-      setLocationStatus("Detected: Lat 51.5100, Lng -0.1000");
-    }, 1000);
+    const someCondition = true;
+    const xy = navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { longitude, latitude } = position.coords;
+        setAutomaticPosition([longitude, latitude]);
+        console.log(position);
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+    if (someCondition) {
+      openModal(
+        <div className="bg-gradient-to-r from-red-500 to-orange-400 p-5 rounded-xl shadow-lg text-center font-sans text-white max-w-xs mx-auto">
+          <p className="text-2xl font-bold mb-4">Are you sure?</p>
+          <button className="bg-white text-red-500 border-none py-2 px-5 rounded-full text-base cursor-pointer hover:scale-105 transition-transform shadow-md">
+            Confirm
+          </button>
+        </div>
+      );
+    }
+    // setTimeout(() => {
+    //   setPosition([51.51, -0.1]);
+    //   setLocationStatus("Detected: Lat 51.5100, Lng -0.1000");
+    // }, 1000);
   };
 
   return (
@@ -190,11 +211,13 @@ const LocationSelectorPage = () => {
 
         {/* Automatic mode UI */}
         {mode === "automatic" && (
-          <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-lg shadow-md p-6">
+          <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-lg shadow-md p-6 ">
             <MapPin className="w-16 h-16 text-blue-500 mb-4 animate-bounce" />
             <button
               onClick={handleAutomaticLocation}
-              className="px-8 py-3 bg-blue-600 text-white rounded-full font-semibold text-lg hover:bg-blue-700 transition-all duration-300 shadow-lg"
+              className="px-8 py-3 bg-blue-600 text-white rounded-full font-semibold text-lg 
+              hover:bg-blue-700 hover:shadow-xl hover:scale-105 
+              transition-all duration-300 cursor-pointer"
             >
               Detect My Location
             </button>
