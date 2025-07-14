@@ -2,11 +2,51 @@
 "use client";
 import { useState, useEffect } from "react";
 import Head from "next/head";
+import dynamic from "next/dynamic";
+
 import { ArrowLeft, Star, Car, MapPin } from "lucide-react";
+import L from "leaflet";
 
+// import {
+//   MapContainer,
+//   TileLayer,
+//   Marker,
+//   Popup,
+//   useMap,
+//   useMapEvent,
+// } from "react-leaflet";
+import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
+import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
+import "leaflet-routing-machine";
+import "leaflet/dist/leaflet.css";
+import { useCoordinate } from "context/Coordinates";
+const customIcon = new L.Icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
+
+const MapContainer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+const Marker = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Marker),
+  { ssr: false }
+);
+const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
+  ssr: false,
+});
 const DriversPage = () => {
+  const { coordinate } = useCoordinate();
+  console.log(coordinate);
   const [isWaiting, setIsWaiting] = useState(true);
-
+  const position3 = [11.598, 37.3789];
+  const position2 = [11.598, 37.3944];
   // Dummy drivers data
   const drivers = [
     {
@@ -31,7 +71,7 @@ const DriversPage = () => {
       distance: "1.5 mi",
     },
   ];
-
+  console.log(coordinate);
   // Simulate waiting for drivers
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -72,40 +112,64 @@ const DriversPage = () => {
 
         {/* Drivers list */}
         {!isWaiting && (
-          <div className="flex-1 space-y-4">
-            {drivers.map((driver) => (
-              <div
-                key={driver.id}
-                className="bg-white rounded-lg shadow-md p-4 flex items-center justify-between"
-              >
-                <div className="flex items-center">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full mr-3 flex items-center justify-center">
-                    <Car className="w-6 h-6 text-gray-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800">
-                      {driver.name}
-                    </p>
-                    <div className="flex items-center">
-                      <Star className="w-4 h-4 text-yellow-400 mr-1" />
-                      <span className="text-xs text-gray-600">
-                        {driver.rating}
-                      </span>
+          <div>
+            <div className="flex-1 space-y-4">
+              {drivers.map((driver) => (
+                <div
+                  key={driver.id}
+                  className="bg-white rounded-lg shadow-md p-4 flex items-center justify-between"
+                >
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-gray-200 rounded-full mr-3 flex items-center justify-center">
+                      <Car className="w-6 h-6 text-gray-600" />
                     </div>
-                    <p className="text-xs text-gray-500">{driver.car}</p>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">
+                        {driver.name}
+                      </p>
+                      <div className="flex items-center">
+                        <Star className="w-4 h-4 text-yellow-400 mr-1" />
+                        <span className="text-xs text-gray-600">
+                          {driver.rating}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500">{driver.car}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center justify-end">
+                      <MapPin className="w-4 h-4 text-red-500 mr-1" />
+                      <p className="text-xs text-gray-600">{driver.distance}</p>
+                    </div>
+                    <button className="mt-2 px-4 py-1 bg-blue-600 text-white text-sm rounded-full hover:bg-blue-700 transition">
+                      Select
+                    </button>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="flex items-center justify-end">
-                    <MapPin className="w-4 h-4 text-red-500 mr-1" />
-                    <p className="text-xs text-gray-600">{driver.distance}</p>
-                  </div>
-                  <button className="mt-2 px-4 py-1 bg-blue-600 text-white text-sm rounded-full hover:bg-blue-700 transition">
-                    Select
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            <p>your driver is found he is there and he is coming</p>
+            <MapContainer
+              center={position3}
+              zoom={14}
+              scrollWheelZoom={true}
+              style={{ height: "500px", width: "100%" }}
+              // whenCreated={(map) => {
+              //   map.on("click", handleMapClick); // Attach handleMapClick here
+              // }}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution="&copy; OpenStreetMap contributors"
+              />
+              {/* <ClickMapHandler onClick={setPointPosition} /> */}
+              <Marker icon={customIcon} position={position3}>
+                <Popup>Meskel Square your Driver is here</Popup>
+              </Marker>
+              <Marker icon={customIcon} position={coordinate}>
+                <Popup>You</Popup>
+              </Marker>
+            </MapContainer>
           </div>
         )}
 

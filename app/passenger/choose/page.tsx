@@ -4,6 +4,7 @@ import { useModal } from "context/ModalContext";
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import Head from "next/head";
+import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import {
   MapContainer,
@@ -26,6 +27,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
+import { useCoordinate } from "context/Coordinates";
 const customIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconSize: [25, 41],
@@ -63,7 +65,9 @@ function ClickMapHandler({
   return null;
 }
 const LocationSelectorPage = () => {
-  const { openModal } = useModal();
+  const { setCoordinate } = useCoordinate();
+  const router = useRouter();
+  const { openModal, closeModal } = useModal();
   const [automaticPosition, setAutomaticPosition] = useState([]);
   const [pointPosition, setPointPosition] = useState<[number, number]>([
     9.03, 38.74,
@@ -92,23 +96,50 @@ const LocationSelectorPage = () => {
     const xy = navigator.geolocation.getCurrentPosition(
       (position) => {
         const { longitude, latitude } = position.coords;
-        setAutomaticPosition([longitude, latitude]);
+        const userCoords = [latitude, longitude];
+        setAutomaticPosition([latitude, longitude]);
+        setCoordinate([latitude, longitude]);
         console.log(position);
+        openModal(
+          <div className="bg-gradient-to-r from-red-500 to-orange-400 p-5 rounded-xl shadow-lg text-center font-sans text-white max-w-xs mx-auto">
+            <p>Location Found</p>
+            <div>
+              <MapContainer
+                center={userCoords}
+                zoom={14}
+                scrollWheelZoom={true}
+                style={{ height: "250px", width: "100%" }}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution="&copy; OpenStreetMap contributors"
+                />
+                {/* <ClickMapHandler onClick={setPointPosition} /> */}
+                <Marker icon={customIcon} position={userCoords}>
+                  <Popup>Meskel Square</Popup>
+                </Marker>
+
+                {/* <Routing from={from} to={to} /> */}
+              </MapContainer>
+            </div>
+            <p className="text-2xl font-bold mb-4">Are you sure?</p>
+            <button
+              onClick={() => {
+                router.push("/passenger/waiting");
+                closeModal();
+              }}
+              className="bg-white text-red-500 border-none py-2 px-5 rounded-full text-base cursor-pointer hover:scale-105 transition-transform shadow-md"
+            >
+              Call A Taxi Now
+            </button>
+          </div>
+        );
       },
       (error) => {
         console.log(error);
       }
     );
-    if (someCondition) {
-      openModal(
-        <div className="bg-gradient-to-r from-red-500 to-orange-400 p-5 rounded-xl shadow-lg text-center font-sans text-white max-w-xs mx-auto">
-          <p className="text-2xl font-bold mb-4">Are you sure?</p>
-          <button className="bg-white text-red-500 border-none py-2 px-5 rounded-full text-base cursor-pointer hover:scale-105 transition-transform shadow-md">
-            Confirm
-          </button>
-        </div>
-      );
-    }
+
     // setTimeout(() => {
     //   setPosition([51.51, -0.1]);
     //   setLocationStatus("Detected: Lat 51.5100, Lng -0.1000");
@@ -200,8 +231,6 @@ const LocationSelectorPage = () => {
               <Marker icon={customIcon} position={position3}>
                 <Popup>Meskel Square</Popup>
               </Marker>
-
-              {/* <Routing from={from} to={to} /> */}
             </MapContainer>
             <p className="text-xs text-gray-500 text-center mt-2 animate-pulse">
               Tap the map to pick a location
