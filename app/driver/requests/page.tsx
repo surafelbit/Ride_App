@@ -1,5 +1,5 @@
 "use client";
-
+import { useState, useEffect } from "react";
 export default function RideRequests() {
   return (
     <div className="min-h-screen p-6 bg-gray-100">

@@ -3,18 +3,10 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
 import dynamic from "next/dynamic";
-
+import axios from "axios";
 import { ArrowLeft, Star, Car, MapPin } from "lucide-react";
 import L from "leaflet";
 
-// import {
-//   MapContainer,
-//   TileLayer,
-//   Marker,
-//   Popup,
-//   useMap,
-//   useMapEvent,
-// } from "react-leaflet";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import "leaflet-routing-machine";
@@ -42,6 +34,12 @@ const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
   ssr: false,
 });
 const DriversPage = () => {
+  useEffect(() => {
+    async function getter() {
+      const data = await axios.post("");
+    }
+    getter();
+  }, []);
   const { coordinate } = useCoordinate();
   console.log(coordinate);
   const [isWaiting, setIsWaiting] = useState(true);
@@ -73,6 +71,16 @@ const DriversPage = () => {
   ];
   console.log(coordinate);
   // Simulate waiting for drivers
+  useEffect(() => {
+    async function getter() {
+      try {
+        const something = await fetch("/api/location");
+        const something2 = await something.json();
+        console.log(something2);
+      } catch (error) {}
+    }
+    getter();
+  }, []);
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsWaiting(false);

@@ -31,12 +31,14 @@ model User {
   password               String
   driverLicenseImageUrl  String?   
   isDriverVerified       Boolean    @default(false)
-  role                   String
+  role                   Role
   profileImage           String?
     isAvailable            Boolean    @default(false)
   rideAsPassenger        Ride[]     @relation("PassengerRides")
   rideAsDriver           Ride[]     @relation("DriverRides")
   vehicles               Vehicle[]
+ currentLat Float?
+currentLng Float?
 
   accounts               Account[]  
   sessions               Session[]  

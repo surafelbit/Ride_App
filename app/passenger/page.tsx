@@ -9,7 +9,7 @@ export default function Page() {
   // Mock user data (replace with auth context or API in a real app)
   const user = { name: "Jane Doe" };
   async function searchNearYou() {
-    router.push("/somepage");
+    router.push("/passenger/choose");
     if (!navigator.geolocation) {
       alert("Geolocation is not supported by your browser.");
       return;
