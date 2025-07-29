@@ -15,6 +15,9 @@ import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import "leaflet-routing-machine";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { io } from "socket.io-client";
+import { useSession } from "next-auth/react";
+
 const customIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconSize: [25, 41],
@@ -54,8 +57,15 @@ function Routing({
 
   return null;
 }
+const socket = io("http://localhost:3000", {
+  path: "/api/socket",
+  transports: ["websocket", "polling"],
+});
 
 export default function DriverDashboard() {
+  const { data: session, status } = useSession();
+  console.log(session?.user.id);
+  const [message, setMessage] = useState("");
   //   const [position, setPosition] = useState(null);
   //   const [position, setPosition] = useState<[number, number] | null>([
   //     9.03, 38.74,
@@ -70,8 +80,26 @@ export default function DriverDashboard() {
   const position3 = [11.598, 37.3789];
   const [online, setOnline] = useState<boolean>(false);
   const router = useRouter();
+  const [input, setInput] = useState();
   const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    fetch("/api/socket"); // Hit it once to initialize the server
+    const socket = io("http://localhost:3000", {
+      path: "/api/socket",
+      transports: ["websocket"],
+    });
 
+    socket.on("connect", () => {
+      console.log("Connected to WebSocket!");
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+  const sendMessage = () => {
+    socket.emit("message");
+  };
   useEffect(() => {
     async function getter() {
       if (!navigator.geolocation) {
@@ -122,6 +150,12 @@ export default function DriverDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
+      <button
+        onClick={sendMessage}
+        className="ml-2 bg-blue-500 text-white px-2"
+      >
+        Send
+      </button>
       <header className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-extrabold text-gray-800">
           👋 Welcome, Driver!
