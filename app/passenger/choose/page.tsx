@@ -78,7 +78,26 @@ const LocationSelectorPage = () => {
   const [locationStatus, setLocationStatus] = useState(
     "No location detected yet."
   );
-
+  async function rideCreator({ lat, long }) {
+    try {
+      const res = await fetch("/api/rides/request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ lat, long }),
+      });
+      const data = await res.json(); // parse JSON response
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("API error response:", text);
+        throw new Error("API call failed");
+      }
+      console.log(data);
+    } catch (error) {
+      console.log(error);
+    }
+  }
   // Placeholder for map click in manual mode
   const handleMapClick = (e) => {
     const { lat, lng } = e.latlng;
@@ -90,15 +109,17 @@ const LocationSelectorPage = () => {
   const position3 = [11.598, 37.3789];
 
   // Placeholder for automatic location detection
-  const handleAutomaticLocation = () => {
+  const handleAutomaticLocation = async () => {
     setLocationStatus("Detecting location...");
     const someCondition = true;
     const xy = navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { longitude, latitude } = position.coords;
         const userCoords = [latitude, longitude];
         setAutomaticPosition([latitude, longitude]);
+
         setCoordinate([latitude, longitude]);
+        await rideCreator({ lat: latitude, long: longitude });
         console.log(position);
         openModal(
           <div className="bg-gradient-to-r from-red-500 to-orange-400 p-5 rounded-xl shadow-lg text-center font-sans text-white max-w-xs mx-auto">

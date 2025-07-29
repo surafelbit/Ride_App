@@ -37,7 +37,7 @@ export default function Login() {
       });
 
       if (res?.ok) {
-        router.push("/dashboard");
+        router.push("/passenger");
       } else {
         setError(res?.error || "Invalid email or password");
       }
