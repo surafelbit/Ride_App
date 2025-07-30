@@ -91,6 +91,9 @@ export default function DriverDashboard() {
 
     socket.on("connect", () => {
       console.log("Connected to WebSocket!");
+      socket.emit("Driver-Online", {
+        id: session?.user.id,
+      });
     });
 
     return () => {
@@ -98,7 +101,7 @@ export default function DriverDashboard() {
     };
   }, []);
   const sendMessage = () => {
-    socket.emit("message");
+    socket.emit("message", "hello from the client side");
   };
   useEffect(() => {
     async function getter() {

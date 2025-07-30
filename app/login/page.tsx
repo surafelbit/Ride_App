@@ -1,13 +1,10 @@
 "use client";
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion"; // For animations
-import { useSession } from "next-auth/react";
 
 export default function Login() {
-  const { data: session, status } = useSession();
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +38,14 @@ export default function Login() {
 
       if (res?.ok) {
         console.log(res);
-        router.push("/passenger");
+        const session = await getSession();
+        if (session?.user?.role == "PASSENGER") {
+          router.push("/passenger");
+        } else if (session?.user?.role == "DRIVER") {
+          router.push("/driver/dashboard");
+        } else {
+          router.push("/unauthorized");
+        }
       } else {
         setError(res?.error || "Invalid email or password");
       }

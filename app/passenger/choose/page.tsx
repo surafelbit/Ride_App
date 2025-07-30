@@ -28,6 +28,10 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { useCoordinate } from "context/Coordinates";
+import { io } from "socket.io-client";
+import socket from "@/lib/socket"; // Adjust the path to match your project
+import { useEffect } from "react";
+import { useSession } from "next-auth/react";
 const customIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconSize: [25, 41],
@@ -64,7 +68,56 @@ function ClickMapHandler({
   });
   return null;
 }
+// const socket = io("http://localhost:3000", {
+//   path: "/api/socket",
+//   transports: ["websocket", "polling"],
+// });
+// fetch("/api/socket"); // Initializes the backend Socket.IO server
+
+// socket.on("connect", () => {
+//   console.log("✅ Connected to WebSocket:", socket.id);
+// });
 const LocationSelectorPage = () => {
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    // fetch("/api/socket"); // Initializes the backend Socket.IO server
+    const initSocket = async () => {
+      try {
+        // Wait for backend to init
+        await fetch("/api/socket");
+        console.log("🛰️ Backend socket initialized");
+
+        // Now connect to socket
+        if (!socket.connected) {
+          socket.connect();
+        }
+
+        socket.on("connect", () => {
+          console.log("✅ Connected to WebSocket:", socket.id);
+        });
+      } catch (err) {
+        console.error("❌ Socket init failed", err);
+      }
+    };
+
+    initSocket();
+
+    return () => {
+      socket.disconnect();
+    };
+    // socket.on("connect", () => {
+    //   console.log("✅ Connected to WebSocket:", socket.id);
+    // });
+
+    // socket.on("Passenger-joined", (data) => {
+    //   console.log("🟢 Passenger joined broadcast:", data);
+    // });
+
+    // socket.on("user-joined", (data) => {
+    //   console.log("👋 Driver joined broadcast:", data);
+    // });
+  }, []);
   const { setCoordinate } = useCoordinate();
   const router = useRouter();
   const { openModal, closeModal } = useModal();
@@ -109,6 +162,7 @@ const LocationSelectorPage = () => {
   const position3 = [11.598, 37.3789];
 
   // Placeholder for automatic location detection
+
   const handleAutomaticLocation = async () => {
     setLocationStatus("Detecting location...");
     const someCondition = true;
@@ -117,8 +171,31 @@ const LocationSelectorPage = () => {
         const { longitude, latitude } = position.coords;
         const userCoords = [latitude, longitude];
         setAutomaticPosition([latitude, longitude]);
-
+        // fetch("/api/socket");
+        // const socket = io("http://localhost:3000", {
+        //   path: "/api/socket",
+        //   transports: ["websocket"],
+        // });
         setCoordinate([latitude, longitude]);
+        // socket.on("connect", () => {
+        //   console.log("connected to websocket as a passenger");
+        // });
+        socket.emit(
+          "Passenger-Online",
+          {
+            userId: session?.user?.id || "unknown-user",
+            name: session?.user?.name || "Anonymous",
+            latitude,
+            longitude,
+          }
+          // {
+          //   userId: "user1",
+          //   name: "user",
+          //   location1: latitude,
+          //   location2: longitude,
+          // }
+        );
+        // socket.on("Passenger-Online", () => {});
         await rideCreator({ lat: latitude, long: longitude });
         console.log(position);
         openModal(

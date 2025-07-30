@@ -5,27 +5,27 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useEffect } from "react";
-import { io } from "socket.io-client";
+// import { io } from "socket.io-client";
 
-const socket = io({
-  path: "/api/socket",
-});
+// const socket = io({
+//   path: "/api/socket",
+// });
 export default function Page() {
   const router = useRouter();
   const { data: session, status } = useSession();
-  console.log(session?.user.id); // ✅ works
-  useEffect(() => {
-    socket.on("connect", () => {
-      console.log("✅ Connected to socket:", socket.id);
+  // console.log(session?.user.id); // ✅ works
+  // useEffect(() => {
+  //   socket.on("connect", () => {
+  //     console.log("✅ Connected to socket:", socket.id);
 
-      // Emit user-online with user data (e.g., userId or name)
-      socket.emit("user-online", { userId: "12345", name: "Surafel" });
-    });
+  //     // Emit user-online with user data (e.g., userId or name)
+  //     socket.emit("user-online", { userId: "12345", name: "Surafel" });
+  //   });
 
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
+  //   return () => {
+  //     socket.disconnect();
+  //   };
+  // }, []);
   // Mock user data (replace with auth context or API in a real app)
   const user = { name: "Jane Doe" };
   async function searchNearYou() {
