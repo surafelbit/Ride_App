@@ -81,6 +81,9 @@ export default function DriverDashboard() {
   const [online, setOnline] = useState<boolean>(false);
   const router = useRouter();
   const [input, setInput] = useState();
+  const [locationPassenger, setLocationPassenger] = useState();
+  const [locationPassenger2, setLocationPassenger2] = useState();
+  const [usersArray, setUsersArray] = useState([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     fetch("/api/socket"); // Hit it once to initialize the server
@@ -95,7 +98,14 @@ export default function DriverDashboard() {
         id: session?.user.id,
       });
     });
-
+    socket.on("passenger-found", (data) => {
+      console.log("message received", data);
+      setLocationPassenger(data.latitude);
+      setLocationPassenger2(data.longitude);
+      setUsersArray([data.latitude, data.longitude]);
+      console.log(data.latitude, data.longitude);
+      setUsersArray([data.latitude, data.longitude]);
+    });
     return () => {
       socket.disconnect();
     };
@@ -115,6 +125,7 @@ export default function DriverDashboard() {
       navigator.geolocation.getCurrentPosition(
         (position: GeolocationPosition) => {
           console.log(position);
+
           //   setPosition([position.coords.latitude, position.coords.longitude]);
         },
         (error: GeolocationPositionError) => {
@@ -236,6 +247,11 @@ export default function DriverDashboard() {
           <Marker icon={customIconFrom} position={from}>
             <Popup>Meskel Square</Popup>
           </Marker>
+          {usersArray[0] != undefined && (
+            <Marker icon={customIcon} position={usersArray}>
+              <Popup>Meskel Square</Popup>
+            </Marker>
+          )}
           <Marker icon={customIcon} position={to}>
             <Popup>Bole Airport</Popup>
           </Marker>

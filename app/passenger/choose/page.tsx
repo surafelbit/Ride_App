@@ -184,7 +184,7 @@ const LocationSelectorPage = () => {
           "Passenger-Online",
           {
             userId: session?.user?.id || "unknown-user",
-            name: session?.user?.name || "Anonymous",
+            name: session?.user?.firstName || "Anonymous",
             latitude,
             longitude,
           }
