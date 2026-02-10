@@ -1,3 +1,4 @@
+import { error } from "console";
 // app/api/register/route.ts
 import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
@@ -37,9 +38,11 @@ export async function POST(req: Request) {
       { ok: true, message: "User created", user },
       { status: 201 }
     );
-  } catch (err) {
+  } catch (err: any) {
+    console.log(err);
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { error: err.message },
+
       { status: 500 }
     );
   }
