@@ -50,6 +50,7 @@ export default function Login() {
         setError(res?.error || "Invalid email or password");
       }
     } catch (err) {
+      console.log(err);
       setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);

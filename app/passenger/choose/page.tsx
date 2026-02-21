@@ -165,7 +165,6 @@ const LocationSelectorPage = () => {
 
   const handleAutomaticLocation = async () => {
     setLocationStatus("Detecting location...");
-    const someCondition = true;
     const xy = navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { longitude, latitude } = position.coords;

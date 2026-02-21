@@ -1,3 +1,4 @@
+import { error } from "console";
 import NextAuth from "next-auth/next";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
@@ -21,21 +22,27 @@ export const authOptions: AuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const user = await prisma.user.findUnique({
-          where: { email: credentials?.email },
-        });
-        if (!user || !credentials?.password) return null;
-        const isvalid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-        if (!isvalid) return null;
-        return {
-          id: user.id,
-          firstName: user.firstName,
-          email: user.email,
-          role: user.role,
-        };
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials?.email },
+          });
+          if (!user || !credentials?.password) return null;
+          const isvalid = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
+
+          if (!isvalid) return null;
+          return {
+            id: user.id,
+            firstName: user.firstName,
+            email: user.email,
+            role: user.role,
+          };
+        } catch (error) {
+          console.log(error, "error on signing up");
+          return null;
+        }
       },
     }),
   ],
