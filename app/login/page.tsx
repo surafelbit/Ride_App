@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion"; // For animations
 
@@ -37,11 +37,20 @@ export default function Login() {
       });
 
       if (res?.ok) {
-        router.push("/passenger");
+        console.log(res);
+        const session = await getSession();
+        if (session?.user?.role == "PASSENGER") {
+          router.push("/passenger");
+        } else if (session?.user?.role == "DRIVER") {
+          router.push("/driver/dashboard");
+        } else {
+          router.push("/unauthorized");
+        }
       } else {
         setError(res?.error || "Invalid email or password");
       }
     } catch (err) {
+      console.log(err);
       setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);

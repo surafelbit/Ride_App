@@ -15,6 +15,9 @@ import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
 import "leaflet-routing-machine";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { io } from "socket.io-client";
+import { useSession } from "next-auth/react";
+
 const customIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconSize: [25, 41],
@@ -54,8 +57,15 @@ function Routing({
 
   return null;
 }
+const socket = io("http://localhost:3000", {
+  path: "/api/socket",
+  transports: ["websocket", "polling"],
+});
 
 export default function DriverDashboard() {
+  const { data: session, status } = useSession();
+  console.log(session?.user.id);
+  const [message, setMessage] = useState("");
   //   const [position, setPosition] = useState(null);
   //   const [position, setPosition] = useState<[number, number] | null>([
   //     9.03, 38.74,
@@ -70,8 +80,43 @@ export default function DriverDashboard() {
   const position3 = [11.598, 37.3789];
   const [online, setOnline] = useState<boolean>(false);
   const router = useRouter();
+  const [input, setInput] = useState();
+  const [locationPassenger, setLocationPassenger] = useState();
+  const [locationPassenger2, setLocationPassenger2] = useState();
+  const [loadingLocation, setLoadingLocation] = useState(true);
+  const [automaticPosition, setAutomaticPosition] = useState<
+    [number, number] | null
+  >(null);
+  const [usersArray, setUsersArray] = useState([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    fetch("/api/socket"); // Hit it once to initialize the server
+    const socket = io("http://localhost:3000", {
+      path: "/api/socket",
+      transports: ["websocket"],
+    });
 
+    socket.on("connect", () => {
+      console.log("Connected to WebSocket!");
+      socket.emit("Driver-Online", {
+        id: session?.user.id,
+      });
+    });
+    socket.on("passenger-found", (data) => {
+      console.log("message received", data);
+      setLocationPassenger(data.latitude);
+      setLocationPassenger2(data.longitude);
+      setUsersArray([data.latitude, data.longitude]);
+      console.log(data.latitude, data.longitude);
+      setUsersArray([data.latitude, data.longitude]);
+    });
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+  const sendMessage = () => {
+    socket.emit("message", "hello from the client side");
+  };
   useEffect(() => {
     async function getter() {
       if (!navigator.geolocation) {
@@ -84,10 +129,14 @@ export default function DriverDashboard() {
       navigator.geolocation.getCurrentPosition(
         (position: GeolocationPosition) => {
           console.log(position);
+          const { latitude, longitude } = position.coords;
+          setAutomaticPosition([latitude, longitude]);
+          setLoadingLocation(false);
           //   setPosition([position.coords.latitude, position.coords.longitude]);
         },
         (error: GeolocationPositionError) => {
           console.error("Geolocation error:", error);
+          setLoadingLocation(false);
         }
       );
     }
@@ -119,9 +168,23 @@ export default function DriverDashboard() {
     { id: 3, passenger: "Emma", destination: "Midtown", fare: "$6.20" },
     { id: 4, passenger: "Liam", destination: "Westside", fare: "$8.10" },
   ];
-
+  const handleAutomaticLocation = async () => {
+    try {
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const { longitude, latitude } = position.coords;
+        const userCoords = [latitude, longitude];
+        setAutomaticPosition([latitude, longitude]);
+      });
+    } catch (error) {}
+  };
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
+      <button
+        onClick={sendMessage}
+        className="ml-2 bg-blue-500 text-white px-2"
+      >
+        Send
+      </button>
       <header className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-extrabold text-gray-800">
           👋 Welcome, Driver!
@@ -153,59 +216,42 @@ export default function DriverDashboard() {
       </header>
 
       <main className="space-y-6">
-        {/* <MapContainer
-          center={position}
-          zoom={15}
-          scrollWheelZoom={true}
-          className="h-[400px] w-full rounded shadow"
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          />
-
-          {position && (
-            <Marker position={position} icon={customIcon}>
-              <Popup>
-                🏠 Yo! This your crib, dawg. <br /> Latitude: {position[0]}{" "}
-                <br />
-                Longitude: {position[1]}
-              </Popup>
+        {loadingLocation && (
+          <div className="bg-blue-100 p-3 rounded text-center text-blue-700">
+            Detecting your location...
+          </div>
+        )}
+        {!loadingLocation && (
+          <MapContainer
+            center={automaticPosition}
+            zoom={14}
+            scrollWheelZoom={true}
+            style={{ height: "500px", width: "100%" }}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution="&copy; OpenStreetMap contributors"
+            />
+            <Marker icon={customIcon} position={position3}>
+              <Popup>Meskel Square</Popup>
             </Marker>
-          )}
-          {position2 && (
-            <Marker position={position2} icon={customIcon}>
-              <Popup>
-                🏠 Yo! This your crib, dawg. <br /> Latitude: {position2[0]}{" "}
-                <br />
-                Longitude: {position2[1]}
-              </Popup>
+            {automaticPosition && (
+              <Marker icon={customIconFrom} position={automaticPosition}>
+                <Popup>Your Current Location</Popup>
+              </Marker>
+            )}
+            {usersArray[0] != undefined && (
+              <Marker icon={customIcon} position={usersArray}>
+                <Popup>Meskel Square</Popup>
+              </Marker>
+            )}
+            <Marker icon={customIcon} position={to}>
+              <Popup>Bole Airport</Popup>
             </Marker>
-          )}
-        </MapContainer> */}
-        <MapContainer
-          center={from}
-          zoom={14}
-          scrollWheelZoom={true}
-          style={{ height: "500px", width: "100%" }}
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; OpenStreetMap contributors"
-          />
-          <Marker icon={customIcon} position={position3}>
-            <Popup>Meskel Square</Popup>
-          </Marker>
-          <Marker icon={customIconFrom} position={from}>
-            <Popup>Meskel Square</Popup>
-          </Marker>
-          <Marker icon={customIcon} position={to}>
-            <Popup>Bole Airport</Popup>
-          </Marker>
 
-          {/* <Routing from={from} to={to} /> */}
-        </MapContainer>
-
+            {/* <Routing from={from} to={to} /> */}
+          </MapContainer>
+        )}
         {online ? (
           <div className="bg-white p-6 rounded-lg shadow-md">
             <div className="flex items-center space-x-2">
