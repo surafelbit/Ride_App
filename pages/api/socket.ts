@@ -38,7 +38,14 @@ export default function handler(
           io.to(driverSocketId).emit("passenger-found", passengerData);
         }
       });
+      socket.on("Passenger-Location", (data) => {
+        console.log("Passenger location received:", data);
 
+        // Send location to all online drivers
+        for (const [, driverSocketId] of onlineDrivers) {
+          io.to(driverSocketId).emit("update-passenger-location", data);
+        }
+      });
       socket.on("message", (msg) => {
         console.log("📨 Message from client:", msg);
         io.emit("message", msg);
