@@ -17,6 +17,7 @@ import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { io } from "socket.io-client";
 import { useSession } from "next-auth/react";
+import { socket } from "@/lib/socket"; // single shared socket instance
 
 const customIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
@@ -57,10 +58,10 @@ function Routing({
 
   return null;
 }
-const socket = io("http://localhost:3000", {
-  path: "/api/socket",
-  transports: ["websocket", "polling"],
-});
+// const socket = io("http://localhost:3000", {
+//   // path: "/api/socket",
+//   transports: ["websocket", "polling"],
+// });
 
 export default function DriverDashboard() {
   const { data: session, status } = useSession();
@@ -84,36 +85,66 @@ export default function DriverDashboard() {
   const [locationPassenger, setLocationPassenger] = useState();
   const [locationPassenger2, setLocationPassenger2] = useState();
   const [loadingLocation, setLoadingLocation] = useState(true);
+  interface Passenger {
+    id: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+  }
+
+  const [usersArray, setUsersArray] = useState<Passenger[]>([]);
   const [automaticPosition, setAutomaticPosition] = useState<
     [number, number] | null
   >(null);
-  const [usersArray, setUsersArray] = useState([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    fetch("/api/socket"); // Hit it once to initialize the server
-    const socket = io("http://localhost:3000", {
-      path: "/api/socket",
-      transports: ["websocket"],
-    });
+    if (!session?.user?.id) return;
 
-    socket.on("connect", () => {
-      console.log("Connected to WebSocket!");
-      socket.emit("Driver-Online", {
-        id: session?.user.id,
+    const initSocket = async () => {
+      // Initialize the Socket.IO server on the API route
+      await fetch("/api/socket");
+
+      if (!socket.connected) {
+        socket.connect();
+      }
+
+      socket.on("connect", () => {
+        console.log("Connected to WebSocket!");
+        socket.emit("Driver-Online", {
+          id: session?.user.id,
+        });
       });
-    });
-    socket.on("passenger-found", (data) => {
-      console.log("message received", data);
-      setLocationPassenger(data.latitude);
-      setLocationPassenger2(data.longitude);
-      setUsersArray([data.latitude, data.longitude]);
-      console.log(data.latitude, data.longitude);
-      setUsersArray([data.latitude, data.longitude]);
-    });
+
+      const handlePassengerFound = (data: any) => {
+        if (data.latitude && data.longitude && data.userId) {
+          setUsersArray((prev) => {
+            // avoid duplicates by filtering existing
+            const filtered = prev.filter((p) => p.id !== data.userId);
+            return [
+              ...filtered,
+              {
+                id: data.userId,
+                name: data.name || "Anonymous",
+                latitude: data.latitude,
+                longitude: data.longitude,
+              },
+            ];
+          });
+        }
+      };
+
+      socket.on("passenger-found", handlePassengerFound);
+    };
+
+    initSocket();
+
     return () => {
+      socket.off("connect");
+      socket.off("passenger-found");
       socket.disconnect();
     };
-  }, []);
+  }, [session?.user?.id]);
+
   const sendMessage = () => {
     socket.emit("message", "hello from the client side");
   };
@@ -232,22 +263,35 @@ export default function DriverDashboard() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               attribution="&copy; OpenStreetMap contributors"
             />
-            <Marker icon={customIcon} position={position3}>
+            {/* <Marker icon={customIcon} position={position3}>
               <Popup>Meskel Square</Popup>
-            </Marker>
+            </Marker> */}
+            {usersArray.length > 0 &&
+              usersArray.map((passenger) => (
+                <Marker
+                  key={passenger.id}
+                  icon={customIcon}
+                  position={[passenger.latitude, passenger.longitude]}
+                >
+                  <Popup>
+                    {passenger.name} <br /> {passenger.latitude.toFixed(5)},{" "}
+                    {passenger.longitude.toFixed(5)}
+                  </Popup>
+                </Marker>
+              ))}
             {automaticPosition && (
               <Marker icon={customIconFrom} position={automaticPosition}>
                 <Popup>Your Current Location</Popup>
               </Marker>
             )}
-            {usersArray[0] != undefined && (
+            {/* {usersArray[0] != undefined && (
               <Marker icon={customIcon} position={usersArray}>
                 <Popup>Meskel Square</Popup>
               </Marker>
             )}
             <Marker icon={customIcon} position={to}>
               <Popup>Bole Airport</Popup>
-            </Marker>
+            </Marker> */}
 
             {/* <Routing from={from} to={to} /> */}
           </MapContainer>
