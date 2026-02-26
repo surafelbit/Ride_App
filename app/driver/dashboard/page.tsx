@@ -483,7 +483,7 @@ export default function DriverDashboard() {
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false);
-            setSelectedPassenger(null); // ← important cleanup
+            setSelectedPassenger(null);
           }}
           onConfirm={() => {
             if (selectedPassenger) {
