@@ -18,7 +18,7 @@ import L from "leaflet";
 import { io } from "socket.io-client";
 import { useSession } from "next-auth/react";
 import { socket } from "@/lib/socket"; // single shared socket instance
-
+import { createPortal } from "react-dom";
 const customIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconSize: [25, 41],
@@ -67,6 +67,10 @@ export default function DriverDashboard() {
   const { data: session, status } = useSession();
   console.log(session?.user.id);
   const [message, setMessage] = useState("");
+  const [selectedPassenger, setSelectedPassenger] = useState<Passenger | null>(
+    null
+  );
+  const [isModalOpen, setIsModalOpen] = useState(false);
   //   const [position, setPosition] = useState(null);
   //   const [position, setPosition] = useState<[number, number] | null>([
   //     9.03, 38.74,
@@ -137,7 +141,7 @@ export default function DriverDashboard() {
     };
 
     initSocket();
-
+    console.log(usersArray);
     return () => {
       socket.off("connect");
       socket.off("passenger-found");
@@ -192,7 +196,75 @@ export default function DriverDashboard() {
     destination: string;
     fare: string;
   }
+  interface Passenger {
+    id: string;
+    name: string;
+    latitude: number;
+    longitude: number;
+  }
 
+  interface ModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+    passenger: Passenger | null;
+  }
+
+  function PassengerConfirmModal({
+    isOpen,
+    onClose,
+    onConfirm,
+    passenger,
+  }: ModalProps) {
+    if (!isOpen) return null;
+
+    const name = passenger?.name ?? "Passenger";
+
+    const modalContent = (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-auto">
+        {/* Backdrop – clicks here close the modal */}
+        <div
+          className="absolute inset-0 bg-black/65 backdrop-blur-sm"
+          onClick={onClose}
+        />
+
+        {/* The actual modal box – centered vertically & horizontally */}
+        <div className="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-[360px] mx-4 border border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900 mb-3">
+            Pick up {name}?
+          </h2>
+
+          <p className="text-gray-600 mb-6 text-sm leading-relaxed">
+            Are you sure you want to accept this ride request?
+          </p>
+
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium rounded-xl transition-colors"
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={() => {
+                onConfirm();
+                onClose();
+              }}
+              className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm"
+            >
+              Confirm Pickup
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+
+    // Portal → renders directly into <body> → beats Leaflet z-index issues
+    return typeof window !== "undefined"
+      ? createPortal(modalContent, document.body)
+      : null;
+  }
   const rides: Ride[] = [
     { id: 1, passenger: "Sam", destination: "Downtown", fare: "$5.95" },
     { id: 2, passenger: "Alex", destination: "Uptown", fare: "$7.50" },
@@ -266,12 +338,31 @@ export default function DriverDashboard() {
             {/* <Marker icon={customIcon} position={position3}>
               <Popup>Meskel Square</Popup>
             </Marker> */}
+            {/* {usersArray.length > 0 &&
+              usersArray.map((passenger) => (
+                <Marker
+                  key={passenger.id}
+                  icon={customIcon}
+                  position={[passenger.latitude, passenger.longitude]}
+                >
+                  <Popup>
+                    {passenger.name} <br /> {passenger.latitude.toFixed(5)},{" "}
+                    {passenger.longitude.toFixed(5)}
+                  </Popup>
+                </Marker>
+              ))} */}
             {usersArray.length > 0 &&
               usersArray.map((passenger) => (
                 <Marker
                   key={passenger.id}
                   icon={customIcon}
                   position={[passenger.latitude, passenger.longitude]}
+                  eventHandlers={{
+                    click: () => {
+                      setSelectedPassenger(passenger);
+                      setIsModalOpen(true);
+                    },
+                  }}
                 >
                   <Popup>
                     {passenger.name} <br /> {passenger.latitude.toFixed(5)},{" "}
@@ -388,6 +479,26 @@ export default function DriverDashboard() {
         >
           View Ride Requests
         </button>
+        <PassengerConfirmModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedPassenger(null); // ← important cleanup
+          }}
+          onConfirm={() => {
+            if (selectedPassenger) {
+              console.log("Confirmed pickup for:", selectedPassenger.name);
+              // Here you would normally:
+              // socket.emit("driver-accepts-ride", {
+              //   driverId: session?.user?.id,
+              //   passengerId: selectedPassenger.id
+              // });
+            }
+            setIsModalOpen(false);
+            setSelectedPassenger(null);
+          }}
+          passenger={selectedPassenger}
+        />
       </main>
     </div>
   );

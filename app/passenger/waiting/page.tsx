@@ -70,6 +70,18 @@ const DriversPage = () => {
     },
   ];
   console.log(coordinate);
+  useEffect(() => {
+    async function getLocation() {
+      try {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const { longitude, latitude } = position.coords;
+          const userCoords = [latitude, longitude];
+          //setAutomaticPosition([latitude, longitude]);
+        });
+      } catch (err) {}
+    }
+    getLocation();
+  }, []);
   // Simulate waiting for drivers
   useEffect(() => {
     async function getter() {
