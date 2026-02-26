@@ -375,16 +375,6 @@ export default function DriverDashboard() {
                 <Popup>Your Current Location</Popup>
               </Marker>
             )}
-            {/* {usersArray[0] != undefined && (
-              <Marker icon={customIcon} position={usersArray}>
-                <Popup>Meskel Square</Popup>
-              </Marker>
-            )}
-            <Marker icon={customIcon} position={to}>
-              <Popup>Bole Airport</Popup>
-            </Marker> */}
-
-            {/* <Routing from={from} to={to} /> */}
           </MapContainer>
         )}
         {online ? (
