@@ -137,7 +137,7 @@ export default function DriverDashboard() {
     };
 
     initSocket();
-
+    console.log(usersArray);
     return () => {
       socket.off("connect");
       socket.off("passenger-found");
