@@ -120,13 +120,109 @@ const DriversPage = () => {
       {/* Main content area */}
       <div className="flex-1 flex flex-col">
         {/* Waiting state */}
-        {isWaiting && (
+        {/* {isWaiting && (
           <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-lg shadow-md p-6">
             <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
             <p className="text-lg font-semibold text-gray-700 mt-4">
               Searching for drivers...
             </p>
             <p className="text-sm text-gray-500 mt-2">Please wait a moment</p>
+          </div>
+        )} */}
+        {isWaiting && (
+          <div className="flex-1 relative flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 via-white to-blue-50 overflow-hidden">
+            {/* Subtle animated background map */}
+            <div className="absolute inset-0 opacity-30 pointer-events-none">
+              <MapContainer
+                center={coordinate || [9.03, 38.74]} // Addis fallback
+                zoom={12}
+                scrollWheelZoom={false}
+                dragging={false}
+                zoomControl={false}
+                attributionControl={false}
+                style={{ height: "100%", width: "100%" }}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution=""
+                />
+                {coordinate && (
+                  <Marker
+                    position={coordinate}
+                    icon={
+                      new L.Icon({
+                        ...customIcon.options,
+                        className: "animate-pulse", // or your custom class
+                      })
+                    }
+                  >
+                    <Popup>Your location</Popup>
+                  </Marker>
+                )}
+              </MapContainer>
+            </div>
+
+            {/* Foreground content */}
+            <div className="relative z-10 text-center px-6 max-w-md">
+              <div className="mb-8 relative">
+                <div className="w-24 h-24 mx-auto bg-blue-100 rounded-full flex items-center justify-center animate-pulse">
+                  <Car className="w-14 h-14 text-blue-600" />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-32 h-32 rounded-full border-4 border-blue-400 opacity-40 animate-ping"></div>
+                  <div className="w-40 h-40 rounded-full border-4 border-blue-300 opacity-30 animate-ping"></div>
+                </div>
+              </div>
+
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3">
+                Finding you a ride...
+              </h2>
+
+              <p className="text-gray-600 text-lg mb-8 leading-relaxed">
+                We're connecting you to the nearest available driver.
+                <br />
+                Usually takes{" "}
+                <span className="font-semibold text-blue-700">
+                  30–90 seconds
+                </span>
+                .
+              </p>
+
+              <div className="w-full max-w-xs mx-auto mb-10">
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-blue-600 w-1/3 animate-[progress_3s_ease-in-out_infinite]"></div>
+                </div>
+                <p className="text-sm text-gray-500 mt-3 animate-pulse">
+                  Searching nearby drivers • Live
+                </p>
+              </div>
+
+              {coordinate && (
+                <div className="inline-flex items-center bg-white/80 backdrop-blur-sm px-5 py-3 rounded-full shadow-md border border-gray-200 mb-8">
+                  <MapPin className="w-5 h-5 text-red-500 mr-2" />
+                  <span className="text-sm font-medium text-gray-700">
+                    {coordinate[0].toFixed(5)}, {coordinate[1].toFixed(5)}
+                  </span>
+                </div>
+              )}
+
+              <button
+                onClick={() => {
+                  alert("Ride request cancelled (add real logic here)");
+                  // socket.emit("cancel-ride-request");
+                  // router.push("/");
+                  //
+                }}
+                className="px-8 py-4 bg-white border-2 border-red-500 text-red-600 rounded-full font-semibold text-lg hover:bg-red-50 transition-all shadow-md active:scale-95"
+              >
+                Cancel Request
+              </button>
+            </div>
+
+            <div className="absolute bottom-8 left-0 right-0 text-center text-sm text-gray-500 opacity-70">
+              Fun fact: Average wait time in Addis is getting shorter every
+              month! 🚕
+            </div>
           </div>
         )}
 
