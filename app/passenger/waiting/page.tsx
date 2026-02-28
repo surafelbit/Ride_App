@@ -211,6 +211,7 @@ const DriversPage = () => {
                   alert("Ride request cancelled (add real logic here)");
                   // socket.emit("cancel-ride-request");
                   // router.push("/");
+                  //
                 }}
                 className="px-8 py-4 bg-white border-2 border-red-500 text-red-600 rounded-full font-semibold text-lg hover:bg-red-50 transition-all shadow-md active:scale-95"
               >
